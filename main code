@@ -1,0 +1,63 @@
+# import libraries 
+
+from bs4 import BeautifulSoup
+import requests
+import time
+import datetime
+
+import smtplib
+
+# Connect to website 
+
+url = 'https://www.amazon.com/Soundcore-Adaptive-Active-Cancelling-Headphones/dp/B0B5VHRX7F/ref=sr_1_2_sspa?crid=2H9I0MWV5C1VD&dib=eyJ2IjoiMSJ9.RHWx3AuaPtNO33jfJkNxJ_pbyrZn5C3Ci0Stbd9lpAlZfCfFCbEtUGHeCLZy_6D_tVkExj8uIzelMtZYQPb5NINZ5JzCgyKBVEFxAWl05m1mToPmSNhMk5EykStjHkETkXiRJL-cFCsqp5pygEQDcy3frKyiSLP3wBnmvRAnjM_2v3B0mavV7b5MzP7zoZD3mHscKr357e9XRarw02Ch8_YUK-wssg3LjLWbEgIp3sw.IwmGFDQJmpwgOrQIOqcFQxJfAbG3uqo16F9S6_FLLZU&dib_tag=se&keywords=soundcore&qid=1716515206&sprefix=soundcore%2Caps%2C655&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1'
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
+
+page = requests.get(url, headers=headers)
+
+soup1 = BeautifulSoup(page.content, "html.parser")
+soup2 = BeautifulSoup(soup1.prettify(),"html.parser")
+
+title = soup2.find(id='productTitle').get_text()
+price = soup2.find(id='corePrice_feature_div').get_text()
+
+print (title)
+print (price)
+
+import datetime
+
+today = datetime.date.today()
+
+print(today)
+
+def check_price():
+    url = 'https://www.amazon.com/Soundcore-Adaptive-Active-Cancelling-Headphones/dp/B0B5VHRX7F/ref=sr_1_2_sspa?crid=2H9I0MWV5C1VD&dib=eyJ2IjoiMSJ9.RHWx3AuaPtNO33jfJkNxJ_pbyrZn5C3Ci0Stbd9lpAlZfCfFCbEtUGHeCLZy_6D_tVkExj8uIzelMtZYQPb5NINZ5JzCgyKBVEFxAWl05m1mToPmSNhMk5EykStjHkETkXiRJL-cFCsqp5pygEQDcy3frKyiSLP3wBnmvRAnjM_2v3B0mavV7b5MzP7zoZD3mHscKr357e9XRarw02Ch8_YUK-wssg3LjLWbEgIp3sw.IwmGFDQJmpwgOrQIOqcFQxJfAbG3uqo16F9S6_FLLZU&dib_tag=se&keywords=soundcore&qid=1716515206&sprefix=soundcore%2Caps%2C655&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1'
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
+
+    page = requests.get(url, headers=headers)
+
+    soup1 = BeautifulSoup(page.content, "html.parser")
+    soup2 = BeautifulSoup(soup1.prettify(),"html.parser")
+
+    title = soup2.find(id='productTitle').get_text()
+    price = soup2.find(id='corePrice_feature_div').get_text()
+    
+    price = price.strip()[1:7]
+    title = title.strip()
+
+    import datetime
+    today = datetime.date.today()
+    
+    import csv
+
+    header = ['title','price', 'date']
+    data = [title, price, today]
+
+    with open('soundcorePrices.csv', 'a+', newline='', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(data)
+
+    while(True):
+    check_price()
+    time.sleep(10)
+    
+    
