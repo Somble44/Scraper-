@@ -1,0 +1,57 @@
+import requests
+from bs4 import BeautifulSoup
+import time
+
+def scrape_google_news_articles(keyword):
+    url = f"https://news.google.com/rss/search?q={keyword}"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'xml')
+
+    articles = []
+    count = 0
+    for item in soup.find_all('item'):
+        title = item.title.text
+        link = item.link.text
+        description = item.description.text
+        image_url = extract_image_url(link)
+        articles.append({'title': title, 'link': link, 'description': description, 'image_url': image_url})
+        count += 1
+        if count >= 5:
+            break
+    
+    return articles
+
+def extract_image_url(article_url):
+    response = requests.get(article_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    img_tag = soup.find('img')
+    if img_tag:
+        return img_tag['src']
+    return None
+
+def generate_html_file(articles, keyword):
+    html_content = f"<html><head><title>Google News - {keyword}</title></head><body>"
+    html_content += f"<h1>Google News - {keyword}</h1>"
+    for article in articles:
+        html_content += "<div style='border: 1px solid #ccc; margin-bottom: 20px; padding: 10px;'>"
+        html_content += f"<h2><a href='{article['link']}'>{article['title']}</a></h2>"
+        if article['image_url']:
+            html_content += f"<img src='{article['image_url']}' style='max-width: 100%; margin-bottom: 10px;'>"
+        html_content += f"<p>{article['description']}</p>"
+        html_content += "</div>"
+    html_content += "</body></html>"
+
+    filename = f"{keyword}_articles.html"
+    with open(filename, 'w', encoding='UTF8') as f:
+        f.write(html_content)
+    print(f"HTML file '{filename}' has been generated.")
+
+# Example keywords
+keywords = ['Python programming', 'Artificial intelligence', 'Data science']
+
+# Continuous scraping
+while True:
+    for keyword in keywords:
+        articles = scrape_google_news_articles(keyword)
+        generate_html_file(articles, keyword)
+    time.sleep(3600)  # Delay for 1 hour before scraping again
