@@ -29,11 +29,15 @@ def scrape_product(url):
 
 import csv
 
-def check_prices(products):
+def check_prices(products, price_limit):
     data = []
+    notification_needed = False
     for product in products:
         title, price, today = scrape_product(product['url'])
         data.append([product['title'], title, price, today])
+        # Check if the current price is below the price limit
+        if float(price) < price_limit:
+            notification_needed = True
 
     with open('amazon_products_prices.csv', 'a+', newline='', encoding='UTF8') as f:
         writer = csv.writer(f)
@@ -41,6 +45,12 @@ def check_prices(products):
         if f.tell() == 0:
             writer.writerow(['Product 1 Name', 'Product 1 Price', 'Product 2 Name', 'Product 2 Price', 'Product 3 Name', 'Product 3 Price', 'Date'])
         writer.writerow([data[0][1], data[0][2], data[1][1], data[1][2], data[2][1], data[2][2], data[0][3]])
+
+    if notification_needed:
+        send_notification()
+
+# Set the price limit
+## price_limit = 100 # Change this to your desired price limit
 
 # List of products with their URLs
 products = [
