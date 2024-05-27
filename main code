@@ -27,15 +27,20 @@ def scrape_product(url):
     return title, price, today
 
 
+import csv
+
 def check_prices(products):
     data = []
     for product in products:
         title, price, today = scrape_product(product['url'])
-        data.append([title, price, today])
+        data.append([product['title'], title, price, today])
 
     with open('amazon_products_prices.csv', 'a+', newline='', encoding='UTF8') as f:
         writer = csv.writer(f)
-        writer.writerows(data)
+        # Check if the file is empty, if so, write headers
+        if f.tell() == 0:
+            writer.writerow(['Product 1 Name', 'Product 1 Price', 'Product 2 Name', 'Product 2 Price', 'Product 3 Name', 'Product 3 Price', 'Date'])
+        writer.writerow([data[0][1], data[0][2], data[1][1], data[1][2], data[2][1], data[2][2], data[0][3]])
 
 # List of products with their URLs
 products = [
@@ -47,7 +52,7 @@ products = [
 # Write header to CSV file
 with open('amazon_products_prices.csv', 'w', newline='', encoding='UTF8') as f:
     writer = csv.writer(f)
-    writer.writerow(['Title', 'Price', 'Date'])
+    writer.writerow(['Product 1 Name', 'Product 1 Price', 'Product 2 Name', 'Product 2 Price', 'Product 3 Name', 'Product 3 Price', 'Date'])
 
 # Check prices periodically
 while True:
