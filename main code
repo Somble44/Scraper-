@@ -1,36 +1,11 @@
 # import libraries 
-
 from bs4 import BeautifulSoup
 import requests
 import time
 import datetime
+import csv
 
-import smtplib
-
-# Connect to website 
-
-url = 'https://www.amazon.com/Soundcore-Adaptive-Active-Cancelling-Headphones/dp/B0B5VHRX7F/ref=sr_1_2_sspa?crid=2H9I0MWV5C1VD&dib=eyJ2IjoiMSJ9.RHWx3AuaPtNO33jfJkNxJ_pbyrZn5C3Ci0Stbd9lpAlZfCfFCbEtUGHeCLZy_6D_tVkExj8uIzelMtZYQPb5NINZ5JzCgyKBVEFxAWl05m1mToPmSNhMk5EykStjHkETkXiRJL-cFCsqp5pygEQDcy3frKyiSLP3wBnmvRAnjM_2v3B0mavV7b5MzP7zoZD3mHscKr357e9XRarw02Ch8_YUK-wssg3LjLWbEgIp3sw.IwmGFDQJmpwgOrQIOqcFQxJfAbG3uqo16F9S6_FLLZU&dib_tag=se&keywords=soundcore&qid=1716515206&sprefix=soundcore%2Caps%2C655&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1'
-headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
-
-page = requests.get(url, headers=headers)
-
-soup1 = BeautifulSoup(page.content, "html.parser")
-soup2 = BeautifulSoup(soup1.prettify(),"html.parser")
-
-title = soup2.find(id='productTitle').get_text()
-price = soup2.find(id='corePrice_feature_div').get_text()
-
-print (title)
-print (price)
-
-import datetime
-
-today = datetime.date.today()
-
-print(today)
-
-def check_price():
-    url = 'https://www.amazon.com/Soundcore-Adaptive-Active-Cancelling-Headphones/dp/B0B5VHRX7F/ref=sr_1_2_sspa?crid=2H9I0MWV5C1VD&dib=eyJ2IjoiMSJ9.RHWx3AuaPtNO33jfJkNxJ_pbyrZn5C3Ci0Stbd9lpAlZfCfFCbEtUGHeCLZy_6D_tVkExj8uIzelMtZYQPb5NINZ5JzCgyKBVEFxAWl05m1mToPmSNhMk5EykStjHkETkXiRJL-cFCsqp5pygEQDcy3frKyiSLP3wBnmvRAnjM_2v3B0mavV7b5MzP7zoZD3mHscKr357e9XRarw02Ch8_YUK-wssg3LjLWbEgIp3sw.IwmGFDQJmpwgOrQIOqcFQxJfAbG3uqo16F9S6_FLLZU&dib_tag=se&keywords=soundcore&qid=1716515206&sprefix=soundcore%2Caps%2C655&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1'
+def scrape_product(url):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 OPR/109.0.0.0", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
 
     page = requests.get(url, headers=headers)
@@ -38,26 +13,43 @@ def check_price():
     soup1 = BeautifulSoup(page.content, "html.parser")
     soup2 = BeautifulSoup(soup1.prettify(),"html.parser")
 
-    title = soup2.find(id='productTitle').get_text()
-    price = soup2.find(id='corePrice_feature_div').get_text()
+    title = soup2.find(id='productTitle').get_text().strip()
     
-    price = price.strip()[1:7]
-    title = title.strip()
+    # Check if the price element exists
+    price_element = soup2.find(id='corePrice_feature_div')
+    if price_element:
+        price = price_element.get_text().strip()[1:7]
+    else:
+        price = "Price information not available"
 
-    import datetime
     today = datetime.date.today()
     
-    import csv
+    return title, price, today
 
-    header = ['title','price', 'date']
-    data = [title, price, today]
 
-    with open('soundcorePrices.csv', 'a+', newline='', encoding='UTF8') as f:
+def check_prices(products):
+    data = []
+    for product in products:
+        title, price, today = scrape_product(product['url'])
+        data.append([title, price, today])
+
+    with open('amazon_products_prices.csv', 'a+', newline='', encoding='UTF8') as f:
         writer = csv.writer(f)
-        writer.writerow(data)
+        writer.writerows(data)
 
-    while(True):
-    check_price()
+# List of products with their URLs
+products = [
+    {'title': 'Product 1', 'url': 'https://www.amazon.ae/soundcore-Cancelling-Headphones-Comfortable-Multipoint/dp/B08HMWZBXC/ref=sr_1_3_sspa?crid=7JV1REK2IVDM&dib=eyJ2IjoiMSJ9.L0iIm6Fv4eF13aVClXNkXcWf3IIIqY7K_MQzbLATA5aqnavlt6QPdg36PVbpxVRNRWEc-Kg10AlvosBMz-5nvMCDDsNCJqTdDsV76MU6kD8sRQhlbuC40l0ABeQzLKYFtioegQexc3EEuSMj2r4lVFkQErmEC-XsHi6chUFVnEzrpdux_69nqjw0LDRBqDw7c_MqC2_DQoMB3SC-m3Baeml0btd2VY9oGJsdnaybrA1FpQnL2kW35r9POJ8i2plZ-qzfV9x0lbgjCakMwov1kqflYlK_FrnzipAatorQq04.0JIwrylo-3jES4_6q78JVNHj0qCS5BAXXe1YulUsWkQ&dib_tag=se&keywords=soundcore&qid=1716790155&sprefix=soundc%2Caps%2C282&sr=8-3-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1'},
+    {'title': 'Product 2', 'url': 'https://www.amazon.ae/Alienware-Premium-i7-12700H-Graphics-Win11Home/dp/B0B6D3DKRK/ref=sr_1_1?crid=1K6XTU3N012RF&dib=eyJ2IjoiMSJ9.db-R6HPrXixq80wE3c12wlggzaje8VZkD-5yfNeq0n9SygA25tFRD9uhEuHSkHdAz_drT7SIz2z8Ki21U4pENfftqMhLm92SU6XnBkRraFzNKKRNYJg5cm0Z4UyHpqHIXpkYDAjqee9ga1Hq0kvJfO0J35SlEvKY2xkAxfoMZ5cLVR2MTRtaDIX-1qqtV7PhBR4iKNa5gGuXs9klXXFddB-8Qnbxdw96Lxn8BnAV2JSnsZbvXCyRo9iPjGAVtQcY8w_qVHrbCi027n0qvScXGc2JesEzCq0el034nwcLBuQ.bzkNzmOqh8p7wb-NjRFEUBdz-qvOtGnEpaLo2BeJog8&dib_tag=se&keywords=alienware&qid=1716790189&sprefix=alienwar%2Caps%2C275&sr=8-1'},
+    {'title': 'Product 3', 'url': 'https://www.amazon.ae/dp/B0C44SX1GR/ref=sspa_dk_detail_1?pd_rd_i=B0C44SX1GR&pd_rd_w=cDZyW&content-id=amzn1.sym.62fd8bb8-7cc4-412a-98f0-8265f34f221c&pf_rd_p=62fd8bb8-7cc4-412a-98f0-8265f34f221c&pf_rd_r=ZT4RYHFAW49JDR7H15XK&pd_rd_wg=9LC8q&pd_rd_r=8f548030-12ea-4029-b488-98357408d0f2&s=computers&sp_csd=d2lkZ2V0TmFtZT1zcF9kZXRhaWw&th=1'}
+]
+
+# Write header to CSV file
+with open('amazon_products_prices.csv', 'w', newline='', encoding='UTF8') as f:
+    writer = csv.writer(f)
+    writer.writerow(['Title', 'Price', 'Date'])
+
+# Check prices periodically
+while True:
+    check_prices(products)
     time.sleep(10)
-    
-    
